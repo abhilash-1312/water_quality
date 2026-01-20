@@ -3,8 +3,6 @@ import { prisma } from "../lib/client";
 import { loginSchema, signupSchema } from "../zod/user";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { de } from "zod/v4/locales";
-import { omit } from "zod/v4/core/util.cjs";
 
 const router = Router();
 

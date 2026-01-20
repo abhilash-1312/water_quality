@@ -13,12 +13,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User{
-  userId    String  @id @default(auto()) @map("_id") @db.ObjectId
-  username String
-  email String @unique
-  password String
-  role Role @default(USER)
+model User {
+  userId    String   @id @default(auto()) @map("_id") @db.ObjectId
+  username  String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -27,3 +27,52 @@ enum Role {
   ADMIN
   USER
 }
+
+model Location {
+  locationId String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String   @unique
+  samples    Sample[]
+}
+
+model Sample {
+  sampleId    String       @id @default(auto()) @map("_id") @db.ObjectId
+  sampleCode  String       @unique
+  locationId  String       @db.ObjectId
+  location    Location     @relation(fields: [locationId], references: [locationId])
+  collectedAt DateTime     @default(now())
+  status      SampleStatus @default(COLLECTED)
+  quantityML  Float
+  testResult  TestResult?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum SampleStatus {
+  COLLECTED
+  IN_TESTING
+  COMPLETED
+}
+
+model TestResult {
+  testId            String   @id @default(auto()) @map("_id") @db.ObjectId
+  phValue           Float
+  turbidityNTU      Float
+  tdsPPM            Float
+  temperatureC      Float
+  dissolvedOxygen   Float
+  conductivityUS    Float
+  hardnessMG        Float
+  nitrateMG         Float
+  chlorideMG        Float
+  overallResult     ResultStatus
+  sampleId          String     @unique
+  sample            Sample  @relation(fields: [sampleId], references: [sampleCode])
+  testedAt          DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+enum ResultStatus {
+  SAFE
+  UNSAFE
+  BORDERLINE
+}
+
