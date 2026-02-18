@@ -12,10 +12,18 @@ const IN_PROGRESS: TestRequestStatus[] = [
   TestRequestStatus.Testing
 ];
 
+const TECHNICIAN_INPROGRESS: TestRequestStatus[] = [
+  TestRequestStatus.SampleCollected,
+  TestRequestStatus.Testing
+]
+
 const CLOSED: TestRequestStatus[] = [TestRequestStatus.Completed, TestRequestStatus.Rejected];
 
-const fetchStatus = (status: TestRequestStatus) => {
-  if(IN_PROGRESS.includes(status)){
+const fetchStatus = (status: TestRequestStatus, role: Role = Role.user) => {
+  if(role === Role.technician && TECHNICIAN_INPROGRESS.includes(status)){
+    return TECHNICIAN_INPROGRESS;
+  }
+  if(role === Role.user && IN_PROGRESS.includes(status)){
     return IN_PROGRESS;
   }
   if(CLOSED.includes(status)){
@@ -37,7 +45,7 @@ export async function GET(req: NextRequest, {params}: {params: Promise<{status: 
     const limit = 7;
     const skip = (page - 1) * limit;
     const {status} = await params;
-    const updatedStatus = fetchStatus(status);
+    const updatedStatus = fetchStatus(status, session.user.role);
     const totalCount = await prisma.testRequest.count({
       where: {
         status:{
