@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { toast } from "react-toastify"
+import {toast} from 'sonner'
 import { api } from "@/lib/api"
 import { Pagination } from "@/types/testRequest"
 import { Payment } from "@/types/payment"
