@@ -33,6 +33,13 @@ export async function PUT(req: NextRequest, {params}: {params: Promise<{requestI
             select: {
               id: true,
               status: true,
+              test: {
+                select: {
+                  minValue: true,
+                  maxValue: true,
+                  name: true
+                }
+              }
             },
           },
         },
@@ -71,6 +78,25 @@ export async function PUT(req: NextRequest, {params}: {params: Promise<{requestI
       }
 
       const uniqueIds = [...new Set(updateIds)];
+      const sampleTests = existingTestRequest.sampleTests;
+
+      // let allValuesAreInRange = true;
+      let invalidRangeMessage = ""
+      for(const test of tests){
+        const sampleTest = sampleTests.find((st) => st.id === test.id);
+        if(!sampleTest){
+          continue;
+        }
+        const {minValue, maxValue} = sampleTest.test;
+        if(test.value < minValue || test.value > maxValue){
+          invalidRangeMessage = `${sampleTest.test.name} value must be between ${minValue} and ${maxValue}`
+          break;
+        }
+      }
+
+      if(invalidRangeMessage){
+        return NextResponse.json({error: invalidRangeMessage}, {status: 400});
+      }
 
       const remainingPendingCount = updatableIds.filter(
         (id) => !uniqueIds.includes(id)

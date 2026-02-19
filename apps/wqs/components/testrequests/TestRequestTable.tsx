@@ -113,8 +113,10 @@ export function TestRequestsTable({ testRequests, pagination, prevPage, nextPage
 
         if (response.status === 200) {
           updateTask(requestId, testsToUpdate, "Completed")
-          toast.success(response.data.message)
+          toast.success(response.data.message);
+          return true
         }
+        return false;
       } catch (error) {
         if(isAxiosError(error) && error.response){
           toast.error(error.response.data.error)
@@ -122,6 +124,7 @@ export function TestRequestsTable({ testRequests, pagination, prevPage, nextPage
         else{
           toast.error("Failed to update tests")
         }
+        return false
       }
   };
 
@@ -396,9 +399,14 @@ export function TestRequestsTable({ testRequests, pagination, prevPage, nextPage
         testRequest={updateTestRequest as PendingTestRequest | null}
         onSave={async (testValues) => {
           if (updateTestRequest) {
-            await handleUpdateSubmit(updateTestRequest.requestId, testValues);
+            const success = await handleUpdateSubmit(updateTestRequest.requestId, testValues);
+            if(success){
+              setUpdateTestRequest(null);
+            }
+            return success
           }
-          setUpdateTestRequest(null);
+          return false
+          
         }}
       />
 

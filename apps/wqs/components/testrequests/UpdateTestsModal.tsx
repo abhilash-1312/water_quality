@@ -33,7 +33,7 @@ interface UpdateTestsModalProps {
   isOpen: boolean;
   onClose: () => void;
   testRequest: UpdateTestRequest | null;
-  onSave: (selectedTests: {id: string, value: number}[]) => Promise<void>;
+  onSave: (selectedTests: {id: string, value: number}[]) => Promise<boolean>;
 }
 
 
@@ -92,10 +92,12 @@ export function UpdateTestsModal({
         id,
         value: testValues[id],
       }));
-      await onSave(selectedMap);
-      setTestValues({});
-      setSelectedTests(new Set());
-      onClose();
+      const success = await onSave(selectedMap);
+      if(success){
+        setTestValues({});
+        setSelectedTests(new Set());
+        onClose();
+      }
     } finally {
       setIsSaving(false);
     }
@@ -142,7 +144,6 @@ export function UpdateTestsModal({
         <ScrollArea className="h-100 pr-4">
           <div className="space-y-4">
             {testRequest.sampleTests.map((st) => {
-              console.log("[v0] Rendering test:", st.id, "Name:", st.test.name, "Current value in state:", testValues[st.id]);
               const isCompleted = st.status === 'Completed';
 
               return (
