@@ -4,12 +4,12 @@ import {
   LayoutDashboard,
   CreditCard,
   BadgeDollarSign,
-  BarChart3,
   ListChecks,
   AlertCircle,
   FlaskConical,
   CheckCircle2,
   LayoutDashboardIcon,
+  User2
 } from "lucide-react"
 
 
@@ -52,11 +52,6 @@ const userRoutes = [
       url: "/pricing",
       icon: BadgeDollarSign,
     },
-    {
-      title: "Reports",
-      url: "/reports",
-      icon: BarChart3,
-    },
 ]
 
 const technicianRoutes = [
@@ -81,11 +76,6 @@ const technicianRoutes = [
           url: "/requests/testing",
           icon: FlaskConical,
         },
-        {
-          title: "Completed",
-          url: "/requests/completed",
-          icon: CheckCircle2,
-        },
       ],
     },
 ]
@@ -97,9 +87,9 @@ const adminRoutes = [
       icon: LayoutDashboardIcon,
     },
     {
-        title: "Payments",
-        url: "/payments",
-        icon: CreditCard,
+      title: "Technicians",
+      url: "/technicians",
+      icon: User2,
     }
 ]
 

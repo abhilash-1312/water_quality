@@ -1,135 +1,202 @@
 import { NEXT_AUTH_CONFIG } from "@/lib/auth";
 import { updateTestSchema } from "@/zod/test";
 import prisma from "@repo/db/client";
-import { Role } from "@repo/db/types";
+import { ReportStatus, Role, TestResultStatus } from "@repo/db/types";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PUT(req: NextRequest, {params}: {params: Promise<{requestId: string}>}) {
-    try {
-      const session = await getServerSession(NEXT_AUTH_CONFIG);
-      if(!session || !session.user || !session.user.id || session.user.role !== Role.technician) {
-          return NextResponse.json({error: "Unauthorized"}, {status: 401});
-      }
-      const {requestId} = await params;
-      if (!requestId) {
-        return NextResponse.json({error: "Invalid test request ID"}, {status: 400});
-      }
-      const data = await req.json()
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ requestId: string }> },
+) {
+  try {
+    const session = await getServerSession(NEXT_AUTH_CONFIG);
 
-      const parsed = updateTestSchema.safeParse(data);
-      if (!parsed.success) {
-        return NextResponse.json({error: "Invalid test data"}, {status: 400});
-      }
+    if (
+      !session ||
+      !session.user ||
+      !session.user.id ||
+      session.user.role !== Role.technician
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-      const tests = parsed.data.tests;
+    const { requestId } = await params;
 
-      const existingTestRequest = await prisma.testRequest.findUnique({
-        where: { requestId },
-        select: {
-          requestId: true,
-          testerId: true,
-          sampleTests: {
-            select: {
-              id: true,
-              status: true,
-              test: {
-                select: {
-                  minValue: true,
-                  maxValue: true,
-                  name: true
-                }
-              }
-            },
+    if (!requestId) {
+      return NextResponse.json({ error: "Invalid requestId" }, { status: 400 });
+    }
+
+    const body = await req.json();
+    const parsed = updateTestSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid test data" }, { status: 400 });
+    }
+
+    const incomingTests = parsed.data.tests;
+
+    const existingRequest = await prisma.testRequest.findUnique({
+      where: { requestId },
+      select: {
+        testerId: true,
+        sampleTests: {
+          select: {
+            id: true,
+            status: true,
+            value: true,
+            minValueUsed: true,
+            maxValueUsed: true,
           },
         },
+      },
+    });
+
+    if (!existingRequest) {
+      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
+
+    if (
+      !existingRequest.testerId ||
+      existingRequest.testerId !== session.user.id
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const pendingOrTesting = existingRequest.sampleTests.filter(
+      (t) => t.status === "Pending" || t.status === "Testing",
+    );
+
+    const alreadyCompleted = existingRequest.sampleTests.filter(
+      (
+        t,
+      ): t is {
+        id: string;
+        status: "Completed";
+        value: number;
+        minValueUsed: number;
+        maxValueUsed: number;
+      } => t.status === "Completed" && t.value !== null,
+    );
+
+    const snapshotMap = new Map(pendingOrTesting.map((t) => [t.id, t]));
+
+    const uniqueIncomingMap = new Map<string, number>();
+
+    for (const t of incomingTests) {
+      if (!uniqueIncomingMap.has(t.id)) {
+        uniqueIncomingMap.set(t.id, t.value);
+      }
+    }
+
+    const updatePayload: {
+      id: string;
+      value: number;
+      result: TestResultStatus;
+    }[] = [];
+
+    let actualUpdatableCount = 0;
+
+    for (const [id, value] of uniqueIncomingMap.entries()) {
+      const snapshot = snapshotMap.get(id);
+      if (!snapshot) continue;
+
+      actualUpdatableCount++;
+
+      const safe =
+        value >= snapshot.minValueUsed && value <= snapshot.maxValueUsed;
+
+      updatePayload.push({
+        id,
+        value,
+        result: safe ? TestResultStatus.SAFE : TestResultStatus.UNSAFE,
       });
+    }
 
-      if (!existingTestRequest) {
-        return NextResponse.json({error: "Test request not found"}, {status: 404});
-      }
-
-      if(!existingTestRequest.testerId || existingTestRequest.testerId !== session.user.id){
-          return NextResponse.json({error: "Unauthorized"}, {status: 401});
-      }
-
-      const totalTests = existingTestRequest.sampleTests.length;
-
-      const completedCount = existingTestRequest.sampleTests.filter(
-        (st) => st.status === "Completed"
-      ).length;
-
-      if (completedCount === totalTests) {
-        return NextResponse.json({error: "All tests already completed"}, {status: 400});
-      }
-
-      const updatableIds = existingTestRequest.sampleTests
-        .filter((st) => st.status === "Pending" || st.status === "Testing")
-        .map((st) => st.id);
-
-      const updateIds = tests.map((t) => t.id);
-
-      const invalidIds = updateIds.filter(
-        (id) => !updatableIds.includes(id)
+    if (updatePayload.length === 0) {
+      return NextResponse.json(
+        { message: "Nothing to update" },
+        { status: 200 },
       );
+    }
 
-      if (invalidIds.length > 0) {
-        return NextResponse.json({error: "Invalid test ids"}, {status: 400});
-      }
-
-      const uniqueIds = [...new Set(updateIds)];
-      const sampleTests = existingTestRequest.sampleTests;
-
-      // let allValuesAreInRange = true;
-      let invalidRangeMessage = ""
-      for(const test of tests){
-        const sampleTest = sampleTests.find((st) => st.id === test.id);
-        if(!sampleTest){
-          continue;
-        }
-        const {minValue, maxValue} = sampleTest.test;
-        if(test.value < minValue || test.value > maxValue){
-          invalidRangeMessage = `${sampleTest.test.name} value must be between ${minValue} and ${maxValue}`
-          break;
-        }
-      }
-
-      if(invalidRangeMessage){
-        return NextResponse.json({error: invalidRangeMessage}, {status: 400});
-      }
-
-      const remainingPendingCount = updatableIds.filter(
-        (id) => !uniqueIds.includes(id)
-      ).length;
-
-      await prisma.$transaction(async (tx) => {
-        // Update sample tests
-        await Promise.all(
-          tests.map((item) =>
-            tx.sampleTest.update({
-              where: { id: item.id },
-              data: {
-                value: item.value,
-                status: "Completed",
-              },
-            })
-          )
-        );
-
-        // If no remaining pending tests → complete request
-        if (remainingPendingCount === 0) {
-          await tx.testRequest.update({
-            where: { requestId },
+    await prisma.$transaction(async (tx) => {
+      await Promise.all(
+        updatePayload.map((item) =>
+          tx.sampleTest.update({
+            where: { id: item.id },
             data: {
+              value: item.value,
+              result: item.result,
               status: "Completed",
             },
-          });
-        }
-      });
+          }),
+        ),
+      );
 
-      return NextResponse.json({message: "Tests updated successfully"}, {status: 200});
-    } catch (error) {
-      console.error(error);
-      return NextResponse.json({error: "Internal server error"}, {status: 500});
-    }
+      const remainingAfterUpdate =
+        pendingOrTesting.length - actualUpdatableCount;
+
+      if (remainingAfterUpdate === 0) {
+        const allCompletedNow = [
+          ...alreadyCompleted,
+          ...updatePayload.map((u) => {
+            const snap = snapshotMap.get(u.id)!;
+            return {
+              value: u.value,
+              minValueUsed: snap.minValueUsed,
+              maxValueUsed: snap.maxValueUsed,
+            };
+          }),
+        ];
+
+        let totalRisk = 0;
+
+        for (const t of allCompletedNow) {
+          const mid = (t.minValueUsed + t.maxValueUsed) / 2;
+          const halfRange = (t.maxValueUsed - t.minValueUsed) / 2;
+
+          if (halfRange === 0) continue;
+
+          const deviation = Math.abs(t.value - mid);
+          totalRisk += deviation / halfRange;
+        }
+
+        const avgRisk = totalRisk / allCompletedNow.length;
+
+        let overallResult: ReportStatus;
+
+        if (avgRisk <= 0.25) {
+          overallResult = ReportStatus.EXCELLENT;
+        } else if (avgRisk <= 0.5) {
+          overallResult = ReportStatus.GOOD;
+        } else if (avgRisk <= 0.75) {
+          overallResult = ReportStatus.MODERATE;
+        } else if (avgRisk <= 1) {
+          overallResult = ReportStatus.POOR;
+        } else {
+          overallResult = ReportStatus.UNSAFE;
+        }
+
+        await tx.testRequest.update({
+          where: { requestId },
+          data: {
+            status: "Completed",
+            overallResult,
+          },
+        });
+      }
+    });
+
+    return NextResponse.json(
+      { message: "Tests updated successfully" },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
+}

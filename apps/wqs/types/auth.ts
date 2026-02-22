@@ -1,8 +1,11 @@
 import { Role } from "@repo/db/types";
 
-export interface IUserState {
+export interface BaseUser{
   username: string;
-  email: string;
+  email: string
+}
+
+export interface IUserState extends BaseUser{
   password: string;
 }
 
@@ -23,4 +26,12 @@ export interface SessionUser{
     name: string;
     email: string;
     role: Role
+}
+
+export interface Technician extends BaseUser{
+  userId: string,
+  createdAt: Date,
+  _count: {
+    testStories: number
+  }
 }
