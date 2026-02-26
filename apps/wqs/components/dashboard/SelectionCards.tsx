@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { KPIData } from "@/types/dashboard"
+import { useMemo } from "react"
 
 interface CardConfig {
   title: string
@@ -21,11 +22,24 @@ interface CardConfig {
 }
 
 function getCardConfig(kpi: KPIData): CardConfig[] {
+  const lastMonthRevenue = kpi.payments.lastMonthPaymentTotal
+  const paymentPercentageChange = lastMonthRevenue > 0
+            ? (((kpi.payments.currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100)
+            : 100;
+  const userCount = kpi.users.userCount;
+  const userGrowthPercentage = userCount > 0
+            ? (((kpi.users.currentMonthNewUsersCount) / userCount) * 100)
+            : 100;
+  const prevMonthCount = kpi.testRequests.prevMonthCount;
+  const testRequestPercentageChange = prevMonthCount > 0
+            ? (((kpi.testRequests.currentMonthTestRequestsCount - prevMonthCount) / prevMonthCount) * 100)
+            : 100;
+  
   return [
     {
       title: 'Total Revenue',
       value: `₹${kpi.payments.currentMonthRevenue.toFixed(2)}`,
-      percentageChange: kpi.payments.percentageChange,
+      percentageChange: paymentPercentageChange,
       getTrendText: (pct) => {
         if (pct > 0) return `Up ${pct.toFixed(1)}% this month`
         if (pct < 0) return `Down ${Math.abs(pct).toFixed(1)}% this month`
@@ -41,7 +55,7 @@ function getCardConfig(kpi: KPIData): CardConfig[] {
     {
       title: 'New Users',
       value: kpi.users.currentMonthNewUsersCount,
-      percentageChange: kpi.users.percentageChange,
+      percentageChange: userGrowthPercentage,
       getTrendText: (pct) => {
         if (pct > 0) return `Up ${pct.toFixed(1)}% this month`
         return 'No new users change this month'
@@ -55,7 +69,7 @@ function getCardConfig(kpi: KPIData): CardConfig[] {
     {
       title: 'Test Requests',
       value: kpi.testRequests.currentMonthTestRequestsCount,
-      percentageChange: kpi.testRequests.percentageChange,
+      percentageChange: testRequestPercentageChange,
       getTrendText: (pct) => {
         if (pct > 0) return `Up ${pct.toFixed(1)}% this month`
         if (pct < 0) return `Down ${Math.abs(pct).toFixed(1)}% this month`
@@ -72,7 +86,7 @@ function getCardConfig(kpi: KPIData): CardConfig[] {
 }
 
 export default function SectionCards({kpi}: {kpi: KPIData}) {
-  const cardConfigs = getCardConfig(kpi)
+  const cardConfigs = useMemo(() => getCardConfig(kpi), [kpi])
 
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-3">

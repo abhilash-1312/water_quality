@@ -107,21 +107,15 @@ export async function GET(req: NextRequest) {
       kpi: {
         testRequests: {
           currentMonthTestRequestsCount: testRequestsThisMonth.length,
-          percentageChange: prevMonthCount > 0
-            ? (((testRequestsThisMonth.length - prevMonthCount) / prevMonthCount) * 100)
-            : 100,
+          prevMonthCount
         },
         users: {
           currentMonthNewUsersCount: newUsersThisMonth,
-          percentageChange: userCount > 0
-            ? (((newUsersThisMonth) / userCount) * 100)
-            : 100,
+          userCount,
         },
         payments: {
           currentMonthRevenue: totalRevenueThisMonth,
-          percentageChange: lastMonthPaymentTotal > 0
-            ? (((totalRevenueThisMonth - lastMonthPaymentTotal) / lastMonthPaymentTotal) * 100)
-            : 100,
+          lastMonthPaymentTotal,
         }
       },
       testRequestByStatus,

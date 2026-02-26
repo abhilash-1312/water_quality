@@ -1,10 +1,11 @@
+import { useDashboardState } from "@/atoms/DashboardStata";
 import { api } from "@/lib/api";
 import { DashBoardData } from "@/types/dashboard";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const useDashboard = () => {
-    const [data, setData] = useState<DashBoardData>({} as DashBoardData);
+    const {setData, ...data} = useDashboardState()
     const [loading, setLoading] = useState(true);
     const fetchDashboardData = async () => {
         setLoading(true);

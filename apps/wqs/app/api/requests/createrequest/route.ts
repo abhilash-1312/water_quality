@@ -1,7 +1,9 @@
 import { NEXT_AUTH_CONFIG } from "@/lib/auth";
+import { publish } from "@/lib/publisher";
 import { createTestRequestSchema } from "@/zod/testRequest";
+import { MessageType, UpdateRequestCountEvent } from "@repo/datatypes";
 import prisma from "@repo/db/client";
-import { Role } from "@repo/db/types";
+import { Role, TestRequestStatus } from "@repo/db/types";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -26,6 +28,15 @@ export async function POST(req: NextRequest){
                 mobileNumber
             }
         });
+        const payload: UpdateRequestCountEvent = {
+            action: MessageType.update_request_count,
+            data: {
+                previousStatus: null,
+                status: TestRequestStatus.Pending,
+                count: 1
+            }
+        }
+        await publish(MessageType.socket_message, JSON.stringify(payload));
         return NextResponse.json({testRequest, message: "Test request created successfully"}, {status: 200});
     } catch (error) {
         console.log(error)

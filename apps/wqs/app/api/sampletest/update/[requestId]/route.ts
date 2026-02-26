@@ -1,9 +1,12 @@
 import { NEXT_AUTH_CONFIG } from "@/lib/auth";
 import { updateTestSchema } from "@/zod/test";
+import { MessageType, UpdateRequestCountEvent } from "@repo/datatypes";
 import prisma from "@repo/db/client";
 import { ReportStatus, Role, TestResultStatus } from "@repo/db/types";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import {SampleTestStatus, TestRequestStatus} from '@prisma/client'
+import { publish } from "@/lib/publisher";
 
 export async function PUT(
   req: NextRequest,
@@ -40,6 +43,7 @@ export async function PUT(
       where: { requestId },
       select: {
         testerId: true,
+        status: true,
         sampleTests: {
           select: {
             id: true,
@@ -64,19 +68,19 @@ export async function PUT(
     }
 
     const pendingOrTesting = existingRequest.sampleTests.filter(
-      (t) => t.status === "Pending" || t.status === "Testing",
+      (t) => t.status === TestRequestStatus.Pending || t.status === TestRequestStatus.Testing,
     );
-
+    
     const alreadyCompleted = existingRequest.sampleTests.filter(
       (
         t,
       ): t is {
         id: string;
-        status: "Completed";
+        status: SampleTestStatus;
         value: number;
         minValueUsed: number;
         maxValueUsed: number;
-      } => t.status === "Completed" && t.value !== null,
+      } => t.status === SampleTestStatus.Completed && t.value !== null,
     );
 
     const snapshotMap = new Map(pendingOrTesting.map((t) => [t.id, t]));
@@ -128,7 +132,7 @@ export async function PUT(
             data: {
               value: item.value,
               result: item.result,
-              status: "Completed",
+              status: SampleTestStatus.Completed,
             },
           }),
         ),
@@ -181,10 +185,37 @@ export async function PUT(
         await tx.testRequest.update({
           where: { requestId },
           data: {
-            status: "Completed",
+            status: TestRequestStatus.Completed,
             overallResult,
           },
         });
+        const payload: UpdateRequestCountEvent = {
+          action: MessageType.update_request_count,
+          data: {
+            previousStatus: existingRequest.status,
+            status: TestRequestStatus.Completed,
+            count: 1,
+          },
+        }
+        await publish(MessageType.socket_message, JSON.stringify(payload));
+      } else {
+        await tx.testRequest.update({
+          where: { requestId },
+          data: {
+            status: TestRequestStatus.Testing,
+          },
+        });
+        if(existingRequest.status !== TestRequestStatus.Testing){
+          const payload: UpdateRequestCountEvent = {
+            action: MessageType.update_request_count,
+            data: {
+              previousStatus: existingRequest.status,
+              status: TestRequestStatus.Testing,
+              count: 1,
+            },
+          }
+          await publish(MessageType.socket_message, JSON.stringify(payload));
+        }
       }
     });
 

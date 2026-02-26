@@ -6,6 +6,8 @@ import { Role } from "@repo/db/types";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { PartialTest } from "@/types/common";
+import { publish } from "@/lib/publisher";
+import { MessageType, UpdatePaymentSuccessEvent } from "@repo/datatypes";
 
 
 export async function POST(req: NextRequest, {params}: {params: Promise<{requestId: string}>}){
@@ -65,6 +67,14 @@ export async function POST(req: NextRequest, {params}: {params: Promise<{request
             // return res.status(400).json({error: response.error});
             return NextResponse.json({error: response.error}, {status: 400});
         }
+        const amount = tests.reduce((acc, curr) => acc + curr.price, 0);
+        const payload: UpdatePaymentSuccessEvent = {
+            action: MessageType.update_payment_success,
+            data: {
+                amount
+            }
+        }
+        await publish(MessageType.socket_message, JSON.stringify(payload));
         return NextResponse.json({message: "Payment collected successfully"}, {status: 200});
     } catch (error) {
         console.log(error);

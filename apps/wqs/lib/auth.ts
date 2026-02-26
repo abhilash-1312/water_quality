@@ -51,6 +51,7 @@ export const NEXT_AUTH_CONFIG = {
                 }
                 const jwt = await generateJWT({
                     id: user.userId,
+                    role: user.role
                 });
                 await prisma.user.update({
                     where: {
@@ -91,6 +92,7 @@ export const NEXT_AUTH_CONFIG = {
           if (session.user) {
               session.user.id = token.uid;
               session.user.role = token.role;
+              session.user.token = token.jwtToken
           }
           return session
       }

@@ -2,9 +2,11 @@ import express from "express";
 import { Server } from "socket.io";
 import cors from "cors";
 import { jwtVerify, importJWK } from "jose";
-import { userManager } from "./user/UserManager";
-import { User } from "./user/User";
-import { MessageType, SocketEvent } from "@repo/datatypes";
+import { MessageType } from "@repo/datatypes";
+import { subscriber } from "./lib/subscriber";
+import {z} from 'zod';
+import { socketEventSchema } from "./zod/event";
+import {Role} from "@prisma/client"
 
 const app = express();
 app.use(cors());
@@ -43,7 +45,7 @@ io.use(async (socket, next) => {
     const { payload } = await jwtVerify(token, jwk);
 
     // ✅ Check Admin Role
-    if (payload.role !== "admin") {
+    if (payload.role !== Role.admin) {
       return next(new Error("Admins only"));
     }
 
@@ -57,18 +59,56 @@ io.use(async (socket, next) => {
 });
 
 io.on(MessageType.connection, (socket) => {
-  const userId = socket.data.user.id;
-  const socketId = socket.id;
-  userManager.upsertUser(userId, socketId);
-  socket.on(MessageType.update_data, (data: SocketEvent) => {
-    userManager.users.forEach((user: User) => {
-      if (user.socketId !== socketId) {
-        io.to(user.socketId).emit(MessageType.update_data, data);
-      }
-    });
-  })
-
+    socket.join(MessageType.admin_room)
   socket.on(MessageType.disconnect, () => {
-    userManager.removeUser(userId)
+    socket.leave(MessageType.admin_room);
   });
 });
+
+subscriber.on("connect", () => {
+    console.log("Subscriber connected to Redis");
+})
+
+subscriber.on("error", (err) => {
+    console.error("Subscriber error:", err);
+})
+
+subscriber.subscribe(MessageType.socket_message, (err, count) => {
+    if(err){
+        console.error("Failed to subscribe to channel:", err);
+    } else {
+        console.log(`Subscribed to ${count} channel(s). Waiting for messages...`);
+    }
+})
+
+function broadcastSocketEvent(
+  event: z.infer<typeof socketEventSchema>
+) {
+
+  switch (event.action) {
+    case MessageType.update_payment_failure:
+      return io.to(MessageType.admin_room)
+        .emit(event.action);
+
+    default:
+      return io.to(MessageType.admin_room)
+        .emit(event.action, event.data);
+  }
+}
+
+
+subscriber.on("message", (channel, message) => {
+    if(channel === MessageType.socket_message){
+        try {
+            const socketEventValidationResponse = socketEventSchema.safeParse(JSON.parse(message));
+            if(!socketEventValidationResponse.success){
+                console.error("Invalid socket event received:", socketEventValidationResponse.error);
+                return;
+            }
+            const socketEvent = socketEventValidationResponse.data;
+            broadcastSocketEvent(socketEvent);
+        } catch (error) {
+            console.log("Failed to process socket message:", error);
+        }
+    }
+})

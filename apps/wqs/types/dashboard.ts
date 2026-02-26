@@ -4,15 +4,15 @@ import { PaymentStatus, TestRequestStatus } from "@repo/db/types"
 export interface KPIData{
   testRequests: {
     currentMonthTestRequestsCount: number,
-    percentageChange: number,
+    prevMonthCount: number
   },
   users: {
     currentMonthNewUsersCount: number,
-    percentageChange: number,
+    userCount: number
   },
   payments: {
     currentMonthRevenue: number,
-    percentageChange: number,
+    lastMonthPaymentTotal: number,
   }
 }
 export type TestRequestByStatus = Record<TestRequestStatus, number>

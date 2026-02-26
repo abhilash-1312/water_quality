@@ -1,13 +1,14 @@
-import { MessageType } from "./message";
+import { MessageAction, MessageType } from "./message";
 import { TestRequestStatus } from "@prisma/client";
 
 interface SocketBaseEvent {
-  action: string;
+  action: MessageAction;
 }
 
 export interface UpdateRequestCountEvent extends SocketBaseEvent {
   action: typeof MessageType.update_request_count;
   data: {
+    previousStatus: TestRequestStatus | null;
     status: TestRequestStatus;
     count: number;
   };
