@@ -2,7 +2,7 @@
 import { useTestRequests } from '@/hooks/useTestRequests';
 import React, { useMemo } from 'react'
 import { TestRequestsTable } from './TestRequestTable';
-import { TestRequestStatus } from '@repo/db/types';
+import { TestRequestStatus } from '@prisma/client';
 
 export default function TestRequestMain({status}: {status: TestRequestStatus}) {
     const { testRequests, loading, ...props } = useTestRequests(status);

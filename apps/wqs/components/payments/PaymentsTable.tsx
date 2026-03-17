@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PaymentStatus } from '@repo/db/types';
+import { PaymentStatus } from '@prisma/client';
 
 interface PaymentsTableProps {
   payments: Payment[];

@@ -3,7 +3,7 @@ import { publish } from "@/lib/publisher";
 import { createTestRequestSchema } from "@/zod/testRequest";
 import { MessageType, UpdateRequestCountEvent } from "@repo/datatypes";
 import prisma from "@repo/db/client";
-import { Role, TestRequestStatus } from "@repo/db/types";
+import { Role, TestRequestStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 

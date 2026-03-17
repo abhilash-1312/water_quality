@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Pagination, PendingTestRequest, TestRequest } from '@/types/testRequest';
-import { SampleTestStatus, TestRequestStatus } from '@repo/db/types';
+import { SampleTestStatus, TestRequestStatus } from '@prisma/client';
 import { api } from '@/lib/api';
 import { isAxiosError } from 'axios';
 import { toast } from 'sonner';

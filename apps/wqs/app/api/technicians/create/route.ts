@@ -1,4 +1,4 @@
-import { signupInput } from "@/zod/validateUser";
+import {upsertUserSchema} from "@/zod/validateUser";
 import prisma from "@repo/db/client";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from 'bcryptjs';
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest){
             return NextResponse.json({error: "Unauthorized"}, {status: 401});
         }
         const data = await req.json();
-        const signupValidationResponse = signupInput.safeParse(data);
+        const signupValidationResponse = upsertUserSchema.safeParse(data);
         if(!signupValidationResponse.success){
             console.log(signupValidationResponse.error)
             return NextResponse.json({error: "Invalid credentials"}, {status: 400});

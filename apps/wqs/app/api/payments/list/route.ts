@@ -1,7 +1,7 @@
 import { NEXT_AUTH_CONFIG } from "@/lib/auth";
 import { validatePageSchema } from "@/zod/validatePage";
 import prisma from "@repo/db/client";
-import { Role } from "@repo/db/types";
+import { Role } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 

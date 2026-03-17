@@ -12,7 +12,7 @@ import { Socket } from "socket.io-client";
 import { connectSocket } from "@/lib/socket";
 import { MessageType, UpdatePaymentFailureEvent, UpdatePaymentSuccessEvent, UpdateRequestCountEvent, UserSignupEvent } from "@repo/datatypes";
 import { useSession } from "next-auth/react";
-import { Role, TestRequestStatus } from "@repo/db/types";
+import { Role, TestRequestStatus } from "@prisma/client";
 import { useDashboardState } from "@/atoms/DashboardStata";
 
 

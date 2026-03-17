@@ -23,7 +23,7 @@ import { TestDetailsModal } from './TestDetailsModal';
 import { UpdateTestsModal } from './UpdateTestsModal';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Role, SampleTestStatus, TestRequestStatus } from '@repo/db/types';
+import { Role, SampleTestStatus, TestRequestStatus } from '@prisma/client';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';

@@ -5,6 +5,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextAuthOptions } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import { JWTPayload, SignJWT, importJWK } from 'jose';
+import { Role } from '@prisma/client';
 
 const generateJWT = async (payload: JWTPayload): Promise<string> => {
   const secret = process.env.JWT_SECRET ?? 'secret';
@@ -84,7 +85,7 @@ export const NEXT_AUTH_CONFIG: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.uid;
-        session.user.role = token.role;
+        session.user.role = token.role as Role;
       }
       return session;
     }

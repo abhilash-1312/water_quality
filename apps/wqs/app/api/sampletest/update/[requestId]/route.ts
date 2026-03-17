@@ -2,7 +2,7 @@ import { NEXT_AUTH_CONFIG } from "@/lib/auth";
 import { updateTestSchema } from "@/zod/test";
 import { MessageType, UpdateRequestCountEvent } from "@repo/datatypes";
 import prisma from "@repo/db/client";
-import { ReportStatus, Role, TestResultStatus } from "@repo/db/types";
+import { ReportStatus, Role, TestResultStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import {SampleTestStatus, TestRequestStatus} from '@prisma/client'

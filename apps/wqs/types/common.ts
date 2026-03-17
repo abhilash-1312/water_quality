@@ -1,4 +1,4 @@
-import { Test } from "@repo/db/types"
+import { Test } from "@prisma/client"
 
 export interface IWater{
     waterTypeId: string,

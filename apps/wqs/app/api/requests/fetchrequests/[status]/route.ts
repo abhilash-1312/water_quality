@@ -2,7 +2,7 @@ import { NEXT_AUTH_CONFIG } from "@/lib/auth";
 import { selectionPipeline } from "@/types/selector";
 import { validatePageSchema } from "@/zod/validatePage";
 import prisma from "@repo/db/client";
-import { Role, TestRequestStatus } from "@repo/db/types";
+import { Role, TestRequestStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -31,7 +31,7 @@ const fetchStatus = (status: TestRequestStatus, role: Role = Role.user) => {
   }
   return [status];
 }
-export async function GET(req: NextRequest, {params}: {params: Promise<{status: TestRequestStatus}>}){
+export async function GET(req: NextRequest, {params}: {params: Promise<{status: string}>}){
   try {
     const session = await getServerSession(NEXT_AUTH_CONFIG);
     if(!session || !session.user || !session.user.id){
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest, {params}: {params: Promise<{status: 
     const limit = 7;
     const skip = (page - 1) * limit;
     const {status} = await params;
-    const updatedStatus = fetchStatus(status, session.user.role);
+    const updatedStatus = fetchStatus(status as TestRequestStatus, session.user.role);
     console.log("updated status", updatedStatus)
     const totalCount = await prisma.testRequest.count({
       where: {

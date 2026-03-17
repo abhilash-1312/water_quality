@@ -18,7 +18,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 import { TestRequestByStatus } from "@/types/dashboard"
-import { TestRequestStatus } from "@repo/db/types"
+import { TestRequestStatus } from "@prisma/client"
 
 export const description = "A bar chart showing test request status breakdown"
 
