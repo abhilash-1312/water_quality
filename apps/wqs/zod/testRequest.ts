@@ -1,6 +1,6 @@
 
 import z from "zod";
-import { TestRequestStatus } from "@repo/db/types";
+import { TestRequestStatus } from "@prisma/client";
 const mobileSchema = z.string().regex(
     /^[6-9]\d{9}$/,
     "Not a valid mobile number"

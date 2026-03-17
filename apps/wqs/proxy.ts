@@ -1,4 +1,4 @@
-import { Role } from '@repo/db/types';
+import { Role } from '@prisma/client';
 import { withAuth } from 'next-auth/middleware'
 import { NextResponse, NextRequest } from 'next/server';
 

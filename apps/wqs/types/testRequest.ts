@@ -1,4 +1,4 @@
-import { SampleTestStatus, TestRequestStatus, ReportStatus, TestResultStatus } from "@repo/db/types"
+import { SampleTestStatus, TestRequestStatus, ReportStatus, TestResultStatus } from "@prisma/client"
 export interface BaseTestRequest{
     requestId: string,
     location: string,

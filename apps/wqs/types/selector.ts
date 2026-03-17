@@ -1,4 +1,4 @@
-import { Role, TestRequestStatus } from "@repo/db/types"
+import { Role, TestRequestStatus } from "@prisma/client"
 
 export const selectionPipeline = {
     requestId: true,

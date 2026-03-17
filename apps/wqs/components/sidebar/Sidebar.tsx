@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { SessionUser } from '@/types/auth'
-import { Role } from '@repo/db/types'
+import { Role } from '@prisma/client'
 import { usePathname } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -15,12 +14,13 @@ import { NewRequestModal } from '../testrequests/NewRequestModal'
 import AppSidebar from '@/components/sidebar/AppSidebar'
 import { SidebarBreadcrumb } from '@/components/sidebar/SidebarBreadcrumb'
 import NewTechnicianModal from '../technicians/NewTechnicianModal'
+import { User } from 'next-auth'
 
 export default function Sidebar({
   user,
   children,
 }: {
-  user: SessionUser
+  user: User
   children: React.ReactNode
 }) {
   const pathname = usePathname()

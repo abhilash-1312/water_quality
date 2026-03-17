@@ -1,4 +1,4 @@
-import { PaymentStatus, TestRequestStatus } from "@repo/db/types"
+import { PaymentStatus, TestRequestStatus } from "@prisma/client"
 
 
 export interface KPIData{

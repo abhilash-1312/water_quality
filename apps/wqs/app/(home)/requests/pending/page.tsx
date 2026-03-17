@@ -1,6 +1,6 @@
 'use client';
 import TestRequestMain from '@/components/testrequests/TestRequestMain';
-import { TestRequestStatus } from '@repo/db/types';
+import { TestRequestStatus } from '@prisma/client';
 
 export default function Page() {
   return (

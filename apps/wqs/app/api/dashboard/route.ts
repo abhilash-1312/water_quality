@@ -1,6 +1,6 @@
 import { NEXT_AUTH_CONFIG } from "@/lib/auth";
 import prisma from "@repo/db/client";
-import { PaymentStatus, ReportStatus, Role, TestRequestStatus, TestResultStatus } from "@repo/db/types";
+import { PaymentStatus, ReportStatus, Role, TestRequestStatus, TestResultStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 

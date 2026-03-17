@@ -14,21 +14,21 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import { SessionUser } from "@/types/auth"
 import { NavUser } from "./NavUser"
 import { fetchSidebarData } from "./SidebarData"
 import { NavMain } from "./NavMain"
 import { memo } from "react"
+import { User } from "next-auth"
 
 
 
 
- export default memo(function AppSidebar({ user, ...props}: React.ComponentProps<typeof Sidebar> & { user: SessionUser }) {
+ export default memo(function AppSidebar({ user, ...props}: React.ComponentProps<typeof Sidebar> & { user: User }) {
   const navMain = fetchSidebarData(user.role)
   const data = {
     user: {
-      name: user.name,
-      email: user.email,
+      name: user.name ?? '',
+      email: user.email ?? '',
       avatar: "https://github.com/evilrabbit.png",
     },
     navMain

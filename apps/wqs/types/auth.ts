@@ -1,4 +1,4 @@
-import { Role } from "@repo/db/types";
+import { Role } from "@prisma/client";
 
 export type AuthType = "Login" | "Signup"
 export interface IUserState {

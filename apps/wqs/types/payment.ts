@@ -1,4 +1,4 @@
-import { PaymentStatus } from "@repo/db/types"
+import { PaymentStatus } from "@prisma/client"
 
 export interface Payment {
   paymentId: string
