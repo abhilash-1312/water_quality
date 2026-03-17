@@ -1,3 +1,5 @@
+import { Role, TestRequestStatus } from "@repo/db/types"
+
 export const selectionPipeline = {
     requestId: true,
     status: true,

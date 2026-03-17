@@ -157,12 +157,6 @@ export const useTestRequests = (status: TestRequestStatus) => {
                 return {
                     ...request,
                     sampleTests: (request as PendingTestRequest).sampleTests.map(test => {
-                        // if(ids.includes(test.id)){
-                        //     return {
-                        //         ...test,
-                        //         status
-                        //     }
-                        // }
                         const t = testsToUpdate.find(t => t.id === test.id)
                         if(t){
                             return {

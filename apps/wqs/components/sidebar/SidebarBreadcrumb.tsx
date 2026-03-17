@@ -21,6 +21,7 @@ const breadcrumbConfig: Record<string, { label: string; parent?: string; parentL
   "/pricing": { label: "Pricing" },
   "/reports": { label: "Reports" },
   "/dashboard": { label: "Dashboard" },
+  "/technicians": { label: "Technicians" },
 }
 
 export function SidebarBreadcrumb() {

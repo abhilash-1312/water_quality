@@ -1,12 +1,14 @@
-import { signupInput } from "@/zod/validateUser";
+import { upsertUserSchema } from "@/zod/validateUser";
 import prisma from "@repo/db/client";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from 'bcryptjs';
+import { publish } from "@/lib/publisher";
+import {MessageType, UserSignupEvent} from '@repo/datatypes'
 
 export async function POST(req: NextRequest){
     try {
         const data = await req.json();
-        const signupValidationResponse = signupInput.safeParse(data);
+        const signupValidationResponse = upsertUserSchema.safeParse(data);
         if(!signupValidationResponse.success){
             console.log(signupValidationResponse.error)
             return NextResponse.json({error: "Invalid credentials"}, {status: 400});
@@ -34,6 +36,10 @@ export async function POST(req: NextRequest){
                 username
             }
         });
+        const payload: UserSignupEvent = {
+            action: MessageType.user_signup
+        }
+        await publish(MessageType.socket_message, JSON.stringify(payload))
         return NextResponse.json({message: "User created successfully"}, {status: 200});
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {

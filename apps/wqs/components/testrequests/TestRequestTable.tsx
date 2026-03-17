@@ -3,7 +3,7 @@
 import { SetStateAction, useState } from 'react';
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Pagination, TestRequest, PendingTestRequest } from '@/types/testRequest';
+import { Pagination, TestRequest, PendingTestRequest, SampleTestReport } from '@/types/testRequest';
 import {
   Tooltip,
   TooltipContent,
@@ -21,12 +21,13 @@ import { DeleteConfirmationDialog } from './DeleteConfirmation';
 import { ChooseTestsModal } from './ChooseTestsModal';
 import { TestDetailsModal } from './TestDetailsModal';
 import { UpdateTestsModal } from './UpdateTestsModal';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Role, SampleTestStatus, TestRequestStatus } from '@repo/db/types';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
+import { generateReportPDF } from '@/lib/report';
 
 interface TestRequestsTableProps {
   testRequests: TestRequest[];
@@ -44,6 +45,8 @@ interface TestRequestsTableProps {
 const ITEMS_PER_PAGE = 7;
 
 export function TestRequestsTable({ testRequests, pagination, prevPage, nextPage, setPagination, onEdit, onDelete, chooseTests, updateStatus, updateTask }: TestRequestsTableProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [editingRequest, setEditingRequest] = useState<TestRequest | null>(null);
   const [deletingRequest, setDeletingRequest] = useState<TestRequest | null>(null);
   // const [isChooseTestsModalOpen, setIsChooseTestsModalOpen] = useState(false);
@@ -101,8 +104,6 @@ export function TestRequestsTable({ testRequests, pagination, prevPage, nextPage
   const truncateText = (text: string, length: number): string => {
     return text.length > length ? text.substring(0, length) + '...' : text;
   };
-
-  const pathname = usePathname()
   const handleUpdateSubmit = async (requestId: string, testsToUpdate: { id: string; value: number }[]) => {
       try {
         const response = await api.put(`/sampletest/update/${requestId}`, {
@@ -113,8 +114,10 @@ export function TestRequestsTable({ testRequests, pagination, prevPage, nextPage
 
         if (response.status === 200) {
           updateTask(requestId, testsToUpdate, "Completed")
-          toast.success(response.data.message)
+          toast.success(response.data.message);
+          return true
         }
+        return false;
       } catch (error) {
         if(isAxiosError(error) && error.response){
           toast.error(error.response.data.error)
@@ -122,7 +125,27 @@ export function TestRequestsTable({ testRequests, pagination, prevPage, nextPage
         else{
           toast.error("Failed to update tests")
         }
+        return false
       }
+  };
+
+  const handleViewReport = async (report: SampleTestReport) => {
+    const pdfBlob = await generateReportPDF(report);
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, "_blank");
+  };
+
+  // Download PDF
+  const handleDownloadReport = async (report: SampleTestReport) => {
+    const pdfBlob = await generateReportPDF(report);
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `WaterTestReport_${report.requestId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -280,11 +303,10 @@ export function TestRequestsTable({ testRequests, pagination, prevPage, nextPage
                     <DropdownMenuContent align="end">
                       
                             <>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleViewReport(request as SampleTestReport)}>
                         View Report
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
-                      >
+                      <DropdownMenuItem onClick={() => handleDownloadReport(request as SampleTestReport)}>
                         Download Report
                       </DropdownMenuItem>
                             </>
@@ -396,11 +418,18 @@ export function TestRequestsTable({ testRequests, pagination, prevPage, nextPage
         testRequest={updateTestRequest as PendingTestRequest | null}
         onSave={async (testValues) => {
           if (updateTestRequest) {
-            await handleUpdateSubmit(updateTestRequest.requestId, testValues);
+            const success = await handleUpdateSubmit(updateTestRequest.requestId, testValues);
+            if(success){
+              setUpdateTestRequest(null);
+            }
+            return success
           }
-          setUpdateTestRequest(null);
+          return false
+          
         }}
       />
+
+
 
       {/* Pagination Controls */}
       <div className="mt-1 flex flex-col items-center justify-between gap-4 border-t border-border px-4 py-4 sm:flex-row">

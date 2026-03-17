@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { NewRequestModal } from '../testrequests/NewRequestModal'
 import AppSidebar from '@/components/sidebar/AppSidebar'
 import { SidebarBreadcrumb } from '@/components/sidebar/SidebarBreadcrumb'
+import NewTechnicianModal from '../technicians/NewTechnicianModal'
 
 export default function Sidebar({
   user,
@@ -24,6 +25,7 @@ export default function Sidebar({
 }) {
   const pathname = usePathname()
   const [modalOpen, setModalOpen] = useState(false)
+  const [technicianModalOpen, setTechnicianModalOpen] = useState(false)
 
   return (
     <>
@@ -43,6 +45,9 @@ export default function Sidebar({
               {user.role === Role.user && pathname.startsWith('/requests') && (
                 <Button onClick={() => setModalOpen(true)}>New Request</Button>
               )}
+              {user.role === Role.admin && pathname.startsWith("/technicians") && (
+                <Button onClick={() => setTechnicianModalOpen(true)}>New Technician</Button>
+              )}
             </div>
           </header>
           {children}
@@ -50,6 +55,7 @@ export default function Sidebar({
       </SidebarProvider>
 
       <NewRequestModal open={modalOpen} onOpenChange={setModalOpen} />
+      <NewTechnicianModal open={technicianModalOpen} onOpenChange={setTechnicianModalOpen} />
     </>
   )
 }

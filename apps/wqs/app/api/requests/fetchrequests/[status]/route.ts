@@ -46,6 +46,7 @@ export async function GET(req: NextRequest, {params}: {params: Promise<{status: 
     const skip = (page - 1) * limit;
     const {status} = await params;
     const updatedStatus = fetchStatus(status, session.user.role);
+    console.log("updated status", updatedStatus)
     const totalCount = await prisma.testRequest.count({
       where: {
         status:{
@@ -57,8 +58,7 @@ export async function GET(req: NextRequest, {params}: {params: Promise<{status: 
     if(totalCount === 0){
       return NextResponse.json({requests: [], totalPages: 1}, {status: 200});
     }
-    if(status === TestRequestStatus.Testing){
-      const requests = await prisma.testRequest.findMany({
+    const requests = await prisma.testRequest.findMany({
       where: {
         status: {
           in: updatedStatus
@@ -71,47 +71,48 @@ export async function GET(req: NextRequest, {params}: {params: Promise<{status: 
       orderBy: {
         createdAt: "desc"
       },
-      select: {...selectionPipeline,
-            sampleTests:{
-              select: {
-                id: true,
+      select: {
+        ...selectionPipeline,
+        ...(status === TestRequestStatus.Testing && {
+          payment: {
+            where: {
+              status: "Success",
+            },
+            select: {
+              amount: true
+            }
+          }
+        }),
+        ...(status === TestRequestStatus.Completed && {
+          overallResult: true
+        }),
+        ...((status === TestRequestStatus.Testing || status === TestRequestStatus.Completed) && {
+          sampleTests: {
+            select: {
+              id: true,
+              ...(status === TestRequestStatus.Testing && {
                 test: {
                   select: {
                     name: true
                   }
-                },
-                status: true,
-                value: true
-              }
-            },
-            payment: {
-              where: {
-                status: "Success",
-              },
-              select: {
-                amount: true
-              }
+                }
+              }),
+              status: true,
+              value: true,
+              ...(status === TestRequestStatus.Completed && {
+                testName: true,
+                minValueUsed: true,
+                maxValueUsed: true,
+                unitUsed: true,
+                result: true
+               })
             }
           }
-      });
-      const totalPages = (Math.ceil(totalCount / limit) === 0 ? 1: Math.ceil(totalCount / limit));
-      return NextResponse.json({requests, totalPages}, {status: 200});
-    }
-    const requests = await prisma.testRequest.findMany({
-      where: {
-        status: {
-          in: updatedStatus
-        }
-      },
-      skip,
-      take: limit,
-      orderBy: {
-        createdAt: "desc"
-      },
-      select: selectionPipeline
+        })
+      }
     });
 
-    const totalPages = (Math.ceil(totalCount / limit) === 0 ? 1: Math.ceil(totalCount / limit));
+    const totalPages = Math.max(1, Math.ceil(totalCount / limit));
     return NextResponse.json({requests, totalPages}, {status: 200});
   } catch (error) {
     console.log(error);

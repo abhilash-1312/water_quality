@@ -1,41 +1,39 @@
+import { AuthType } from "@/types/auth"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  FieldDescription,
+} from "@/components/ui/field"
+import Link from 'next/link'
+import AuthForm from './AuthForm'
 
-import { useMemo } from "react"
-import Field from "./Field"
-import LoginButton from "./LoginButton"
-import RequestButton from "./RequestButton"
-
-export default function Auth({type} : Readonly<{type: "Login" | "Signup"}>) {
-
-  const info: {title: string, description: string} = useMemo(() => {
-    if(type === "Signup") return {title: "Sign Up", description: "Create an account to access our services"}
-    return {title: "Login", description: "Login to your account to view and manage your requests"}
-  }, [type])
-
+export default function Auth({type}: {type: AuthType}) {
   return (
-    <div className="flex flex-1 min-h-screen w-full justify-center">
-      <div className="h-full w-full max-w-125 py-10">
-        <>
-        <h1 className="text-3xl font-bold text-white mb-3">System {type}</h1>
-        <p className="text-slate-400">{info.description}</p>
-        </>
-
-        <form className="mt-10 flex flex-col space-y-4">
-          <Field type="email" name="email" placeholder="Enter your email" label="Email" />
-          {type === "Signup" && <Field type="text" name="username" placeholder="Enter your name" label="Name" />}
-          <Field type="password" name="password" placeholder="Enter your password" label="Password" />
-          <LoginButton type={type}/>
-        </form>
-
-        {/* Divider */}
-          <div className="flex items-center gap-4 mt-10">
-            <div className="h-px flex-1" style={{ backgroundColor: '#1E293B' }}></div>
-            <span className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">New Entity</span>
-            <div className="h-px flex-1" style={{ backgroundColor: '#1E293B' }}></div>
-          </div>
-
-          {/* Request Account Button */}
-          <RequestButton type={type}/>
-      </div>
+    <div className='flex flex-col gap-6'>
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">
+              {type === "Login" ? "Welcome back" : "Join us today"}
+            </CardTitle>
+            <CardDescription>
+              {type === "Login"
+                ? "Sign in to continue to your account."
+                : "Create your account and get started in seconds."}
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AuthForm type={type} />
+        </CardContent>
+      </Card>
+      <FieldDescription className="px-6 text-center">
+        By clicking continue, you agree to our <Link href="/">Terms of Service</Link>{" "}
+        and <Link href="/">Privacy Policy</Link>.
+      </FieldDescription>
     </div>
   )
 }

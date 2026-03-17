@@ -1,3 +1,5 @@
+import { Test } from "@repo/db/types"
+
 export interface IWater{
     waterTypeId: string,
     name: string
@@ -23,3 +25,8 @@ export interface ICommonData{
     waterTypes: IWater[],
     tests: ITest[]
 }
+
+export type PartialTest = Pick<
+  Test,
+  "testId" | "name" | "minValue" | "maxValue" | "price" | "unit"
+>;

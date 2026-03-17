@@ -5,6 +5,10 @@ import prisma from "@repo/db/client";
 import { Role } from "@repo/db/types";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { PartialTest } from "@/types/common";
+import { publish } from "@/lib/publisher";
+import { MessageType, UpdatePaymentSuccessEvent } from "@repo/datatypes";
+
 
 export async function POST(req: NextRequest, {params}: {params: Promise<{requestId: string}>}){
     try {
@@ -39,25 +43,38 @@ export async function POST(req: NextRequest, {params}: {params: Promise<{request
         if(existingTestRequest.status === "PaymentCollected"){
             return NextResponse.json({error: "Payment already collected"}, {status: 400});
         }
-        const tests = await prisma.test.findMany({
+        const tests: PartialTest[] = await prisma.test.findMany({
             where: {
                 testId: {
                     in: testIds
                 }
             },
             select: {
-                testId: true
+                testId: true,
+                name: true,
+                maxValue: true,
+                minValue: true,
+                unit: true,
+                price: true
             }
         });
 
         if(testIds.length !== tests.length){
             return NextResponse.json({error: "Invalid test ids"}, {status: 400});
         }
-        const response = await createSampleAndCollectPayment(requestId, testIds, userId);
+        const response = await createSampleAndCollectPayment(requestId, tests, userId);
         if(!response.success){
             // return res.status(400).json({error: response.error});
             return NextResponse.json({error: response.error}, {status: 400});
         }
+        const amount = tests.reduce((acc, curr) => acc + curr.price, 0);
+        const payload: UpdatePaymentSuccessEvent = {
+            action: MessageType.update_payment_success,
+            data: {
+                amount
+            }
+        }
+        await publish(MessageType.socket_message, JSON.stringify(payload));
         return NextResponse.json({message: "Payment collected successfully"}, {status: 200});
     } catch (error) {
         console.log(error);

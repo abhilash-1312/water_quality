@@ -1,6 +1,5 @@
-import { SampleTestStatus, TestRequestStatus } from "@repo/db/types"
-
-export interface BaseRequest{
+import { SampleTestStatus, TestRequestStatus, ReportStatus, TestResultStatus } from "@repo/db/types"
+export interface BaseTestRequest{
     requestId: string,
     location: string,
     sampleLocation: string,
@@ -12,8 +11,7 @@ export interface BaseRequest{
     createdAt: Date,
     status: TestRequestStatus
 }
-
-export interface PendingTestRequest extends BaseRequest{
+export interface PendingTestRequest extends BaseTestRequest{
     sampleTests: {
         id: string,
         test: {
@@ -27,8 +25,20 @@ export interface PendingTestRequest extends BaseRequest{
     }[]
 }
 
-export type TestRequest = PendingTestRequest | BaseRequest;
+export type TestRequest = PendingTestRequest | BaseTestRequest;
 export interface Pagination{
     currentPage: number,
     totalPages: number
+}
+
+export interface SampleTestReport extends BaseTestRequest{
+    sampleTests: {
+        id: string,
+        testName: string,
+        minValueUsed: number,
+        maxValueUsed: number,
+        unitUsed: string,
+        result: TestResultStatus, value: number
+    }[],
+    overallResult: ReportStatus
 }
