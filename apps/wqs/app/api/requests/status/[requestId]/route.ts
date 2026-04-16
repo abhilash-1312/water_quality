@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, {params}: {params: Promise<{reques
                 testerId: true
             }
         });
-        if(!existingRequest || existingRequest.testerId !== session.user.id){
+        if(!existingRequest){
             return NextResponse.json({error: "Test request not found"}, {status: 400});
         }
         await prisma.testRequest.update({

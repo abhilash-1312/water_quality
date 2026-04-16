@@ -64,7 +64,7 @@ export async function GET(req: NextRequest, {params}: {params: Promise<{status: 
           in: updatedStatus
         },
         ...(session.user.role === Role.user && {userId: session.user.id}),
-        ...(session.user.role === Role.technician && {testerId: session.user.id})
+        // ...((session.user.role === Role.technician) && {testerId: session.user.id})
       },
       skip,
       take: limit,
